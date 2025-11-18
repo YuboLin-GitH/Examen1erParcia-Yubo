@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.widget.addTextChangedListener
 import com.example.examen1erparcia_yubo.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -18,10 +19,17 @@ import java.util.Date
 
 class MainActivity : AppCompatActivity() {
     lateinit var mibinding: ActivityMainBinding
-    lateinit var spinnerTipoProducto: Spinner
-    var listaCompra : MutableList<Lista_Compra> = mutableListOf(
 
-    )
+
+    lateinit var spinnerTipoProducto: Spinner
+
+    //Defino un mutableList de Lista_Compra, para
+    //Poder almacenar todas las listas de la compra
+    var listaCompra : MutableList<Lista_Compra> = mutableListOf()
+
+
+    var mi_lista_compra_actual: Lista_Compra?=null
+
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,10 +134,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun pruebaDato(){
-        mibinding.etNombreProducto.setOnClickListener {
+        mibinding.etNombreProducto.addTextChangedListener() {
             habilitaBotonAnadir()
         }
-        mibinding.editTextNumberDecimal.setOnClickListener {
+        mibinding.editTextNumberDecimal.addTextChangedListener {
+            habilitaBotonAnadir()
+        }
+        mibinding.etFechaCompra.addTextChangedListener {
             habilitaBotonAnadir()
         }
     }
@@ -152,6 +163,14 @@ class MainActivity : AppCompatActivity() {
             { view, year1, monthOfYear, dayOfMonth ->
 
                 mibinding.etFechaCompra.setText("$dayOfMonth-${monthOfYear +1}-$year1")
+
+
+                //Aqui voy a gestionar si existe una lista de la compra
+                //con la fecha seleccionada
+
+               // listaCompra.find { it.fecha }
+
+
                 //temp = dateChoice
             }, year, month, day
         )
@@ -159,7 +178,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun habilitaBotonAnadir(){
-
+/*
         var fechaCompra = mibinding.etFechaCompra.text
         var nombreProducto = mibinding.etNombreProducto.text
         var importe = mibinding.editTextNumberDecimal.text
@@ -170,6 +189,17 @@ class MainActivity : AppCompatActivity() {
         else {
             mibinding.btAnadirProducto.isEnabled = true
         }
+
+
+        */
+
+        if((!mibinding.etFechaCompra.text.isEmpty())&& (!mibinding.etNombreProducto.text.isEmpty()) && (!mibinding.editTextNumberDecimal.text.isEmpty())){
+            mibinding.btAnadirProducto.isEnabled=true
+        }
+        else{
+            mibinding.btAnadirProducto.isEnabled=false
+        }
+
     }
 
 
