@@ -50,6 +50,24 @@ class MainActivity : AppCompatActivity() {
 
         avanzarProductos()
 
+        /*
+        var milista_compra = Lista_Compra(Calendar.getInstance().time)
+
+        milista_compra.agregar_Producto(Producto_Cesta("gggg", TipoProducto.COMIDA, 5.10))
+
+        // Filtro los pruductos con precio mayor que 10
+
+
+        var milista_filtrada =    milista_compra.filtrar_Productos { producto ->
+            producto.precio > 10
+        }
+
+        // Filtrar los pruducto cuyo primer caracter del nombre del producto es A
+        milista_compra.filtrar_Productos { producto ->
+            producto.nombre.get(0)== 'A'
+            producto.tipo == TipoProducto.COMIDA
+        }
+        */
 
     }
 
@@ -58,6 +76,9 @@ class MainActivity : AppCompatActivity() {
 
     fun inicializar_componentes() {
         mibinding.etFechaCompra.setOnClickListener {
+            //Obtener la fecha actual
+            val calendario = Calendar.getInstance()
+
             datePicker()
             habilitaBotonAnadir()
         }
@@ -90,10 +111,15 @@ class MainActivity : AppCompatActivity() {
             }
             */
 
-            mibinding.switchFiltraImporte.isEnabled = true
-            mibinding.switchFiltraProducto.isEnabled = true
-            mibinding.btAvanzar.isEnabled = true
-            mibinding.btRetroceso.isEnabled = true
+
+            //Deshabilitar botones
+
+            mibinding.btAnadirProducto.isEnabled= false
+            mibinding.btAvanzar.isEnabled = false
+            mibinding.btRetroceso.isEnabled = false
+            mibinding.switchFiltraImporte.isEnabled = false
+            mibinding.switchFiltraProducto.isEnabled = false
+
 
         }
 
@@ -125,7 +151,7 @@ class MainActivity : AppCompatActivity() {
             this,
             { view, year1, monthOfYear, dayOfMonth ->
 
-                mibinding.etFechaCompra.setText("$dayOfMonth-$monthOfYear-$year1")
+                mibinding.etFechaCompra.setText("$dayOfMonth-${monthOfYear +1}-$year1")
                 //temp = dateChoice
             }, year, month, day
         )
