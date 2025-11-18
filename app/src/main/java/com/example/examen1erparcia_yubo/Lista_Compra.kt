@@ -1,5 +1,6 @@
 package com.example.examen1erparcia_yubo
 
+import java.nio.DoubleBuffer
 import java.util.Date
 
 
@@ -50,6 +51,9 @@ class Lista_Compra(var fecha: Date): Calculable {
     }
 
 
+    fun calcularTotal_bit(): Double = productos_cesta.sumOf { it.precio }
+
+
     override fun calcularTotal(): Double {
         var sumaTotal = 0.0
 
@@ -58,7 +62,9 @@ class Lista_Compra(var fecha: Date): Calculable {
          sumaTotal = productos_cesta.sumOf { it.precio }
         o
 
-        productos_cesta.forEach { sumaTotal += it.precio }
+
+        productos_cesta.forEach {producto-> sumaTotal += producto.precio }
+
         */
 
         for (i in productos_cesta){
