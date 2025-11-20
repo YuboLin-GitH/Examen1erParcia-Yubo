@@ -4,6 +4,7 @@ import android.app.DatePickerDialog
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.Switch
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -29,6 +30,8 @@ class MainActivity : AppCompatActivity() {
 
 
     var mi_lista_compra_actual: Lista_Compra?=null
+
+    var indice_producto=0
 
 
 
@@ -91,43 +94,99 @@ class MainActivity : AppCompatActivity() {
             habilitaBotonAnadir()
         }
 
+        //Deshabilitar botones
+
+        mibinding.btAnadirProducto.isEnabled= false
+        mibinding.btAvanzar.isEnabled = false
+        mibinding.btRetroceso.isEnabled = false
+        mibinding.switchFiltraImporte.isEnabled = false
+        mibinding.switchFiltraProducto.isEnabled = false
+
+
         mibinding.btAnadirProducto.setOnClickListener {
-            var nuevoComprar: Lista_Compra? = null
-            nuevoComprar=listaCompra.find {fe-> fe.fecha==mibinding.etFechaCompra.text }
-            val formato = SimpleDateFormat("dd-MM-yyyy")
-            nuevoComprar?.let {
-                mibinding.etFechaCompra.setText(formato.format(it.fecha))
+            //Añadir el producto a la lista de la compra_actual
 
-                val builder= AlertDialog.Builder(this)
-                builder.setMessage("Existe una lista")
-                builder.setTitle("Error")
-                builder.setPositiveButton("Aceptar"){_,_->}
-                builder.create().show()
+            var miProducto= Producto_Cesta(
+                mibinding.etNombreProducto.text.toString(),
+                mibinding.spinnerTipoProducto.selectedItem as TipoProducto,
+                mibinding.editTextNumberDecimal.text.toString().toDouble()
+            )
+
+
+            mi_lista_compra_actual?.let {
+                it.agregar_Producto(miProducto)
+                mibinding.tvImporteTotal.text = "IMPORTE TOTAL: ${it.calcularTotal()}"
             }
+            //Vacio los campos de texto
+            mibinding.etNombreProducto.setText("")
+            mibinding.editTextNumberDecimal.setText("")
+            //Recalculo el Importe Total
 
-            /*
-            if (nuevoComprar == null){
+            Toast.makeText(this, "Producto Añadido", Toast.LENGTH_SHORT).show()
+        }
 
-                val stringfecha = mibinding.etFechaCompra.text.toString()
-                val fecha: Date = formato.parse(stringfecha)
+        mibinding.btAvanzar.setOnClickListener {
+            val productos = mi_lista_compra_actual?.obtener_Productos()
 
-                if (spinnerTipoProducto.selectedItem == "COMIDA"){
+
+            if (productos != null && indice_producto < productos.size - 1){
+                indice_producto++
+
+                val producto = productos[indice_producto]
+                mibinding.editTextNumberDecimal.setText(producto.precio.toString())
+                mibinding.etNombreProducto.setText(producto.nombre)
+                mibinding.spinnerTipoProducto.setSelection(producto.tipo.ordinal)
+
+
+
+                mibinding.btAvanzar.isEnabled = indice_producto < productos.size - 1
+                mibinding.btRetroceso.isEnabled = true
+
+
+            }
+            else {
+                Toast.makeText(this, "Ya estás en el último producto", Toast.LENGTH_SHORT).show()
+                mibinding.btAvanzar.isEnabled= false
+            }
+        }
+
+        mibinding.btRetroceso.setOnClickListener {
+
+            //Si no estoy al principio de la lista de producto
+            //de la lista de compra actual
+            if (indice_producto>0){
+                var producto= mi_lista_compra_actual?.let {
+                    it.obtener_Productos().get(indice_producto)
 
                 }
-
+                mibinding.editTextNumberDecimal.setText(producto?.precio.toString())
+                mibinding.etNombreProducto.setText(producto?.nombre.toString())
+                mibinding.spinnerTipoProducto.setSelection(producto?.tipo?.ordinal ?: 0)
+                indice_producto--
+            }
+            else{
+                //Deshabilito el boton retroceso
+                mibinding.btRetroceso.isEnabled = false
 
             }
-            */
+        }
 
 
-            //Deshabilitar botones
+        mibinding.switchFiltraProducto.setOnClickListener {
+            var lista_productos = mutableListOf<Producto_Cesta>()
 
-            mibinding.btAnadirProducto.isEnabled= false
-            mibinding.btAvanzar.isEnabled = false
-            mibinding.btRetroceso.isEnabled = false
-            mibinding.switchFiltraImporte.isEnabled = false
-            mibinding.switchFiltraProducto.isEnabled = false
-
+            if (mibinding.switchFiltraProducto.isChecked){
+                    lista_productos = mi_lista_compra_actual.let {
+                        it?.filtrar_Productos {
+                            mibinding.spinnerTipoProducto.selectedItem == it.tipo
+                        } as MutableList<Producto_Cesta>
+                    }
+            }
+            //Actualizo el importe total de la lista de productos
+            var importe = lista_productos?.let {
+                it.sumOf { it.precio }
+            }
+            mibinding.tvImporteTotal.setText(importe.toString())
 
         }
 
@@ -164,12 +223,48 @@ class MainActivity : AppCompatActivity() {
 
                 mibinding.etFechaCompra.setText("$dayOfMonth-${monthOfYear +1}-$year1")
 
-
                 //Aqui voy a gestionar si existe una lista de la compra
                 //con la fecha seleccionada
 
-               // listaCompra.find { it.fecha }
+                var fecha_compra = SimpleDateFormat("dd-MM-yyyy").parse("$dayOfMonth-${monthOfYear +1}-$year1")
 
+                mi_lista_compra_actual= listaCompra.find {it.fecha == fecha_compra}
+                if (mi_lista_compra_actual!=null){
+                        val builder= AlertDialog.Builder(this)
+                    builder.run {
+                        setMessage("Existe una lista con esa fecha")
+                        setTitle("Lista Compra")
+                        setPositiveButton("Aceptar"){_,_->}
+                        create().show()
+                    }
+                }else{// No existe la lista de la compra,
+                    //Instancio la nueva lista de la compra
+                    mi_lista_compra_actual= Lista_Compra(fecha_compra)
+
+                    //La añado a las listas
+                    listaCompra.add(mi_lista_compra_actual!!)
+                }
+
+                //inicialInicializo un variable que me permite
+                //recorrer los productos de la lista
+
+                indice_producto=0
+
+                //Si existe un producto en esa lista de la compra,
+                //muestro el producto
+                if(mi_lista_compra_actual!!.obtener_Productos().size>=1){
+                   var producto_cesta= mi_lista_compra_actual!!.obtener_Productos().get(0)
+                    mibinding.spinnerTipoProducto.setSelection(producto_cesta.tipo.ordinal)
+                    mibinding.etNombreProducto.setText(producto_cesta.nombre)
+                    mibinding.editTextNumberDecimal.setText(producto_cesta.precio.toString())
+
+                }
+
+
+                mibinding.tvImporteTotal.text = "IMPORTE TOTAL: ${mi_lista_compra_actual!!.calcularTotal()}"
+
+                //Habilito el boton avanzar si hay mas de 1 producto
+                mibinding.btAvanzar.isEnabled = (mi_lista_compra_actual!!.obtener_Productos().size>1)
 
                 //temp = dateChoice
             }, year, month, day
